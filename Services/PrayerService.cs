@@ -16,22 +16,29 @@ namespace EzPrayer.Services
 
     public class PrayerService
     {
-public double Latitude { get; set; } = -7.8150248;
-public double Longitude { get; set; } = 110.3147359;
-
-        public List<PrayerItem> GetTodayPrayers()
+        public DateTime GetCurrentTime()
         {
-            var now = DateTime.Now;
-            var coordinates = new Coordinates(Latitude, Longitude);
+            var settings = SettingsService.Load();
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(settings.TimeZoneId);
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+        }
 
-            var parameters = CalculationMethod.Singapore();
+        public List<PrayerItem> GetTodayPrayers(DateTime? date = null)
+        {
+            var settings = SettingsService.Load();
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(settings.TimeZoneId);
+            var now = GetCurrentTime();
+            var prayerDate = (date ?? now).Date;
+            var coordinates = new Coordinates(settings.Latitude, settings.Longitude);
+
+            var parameters = CreateCalculationParameters(settings.CalculationMethodName);
             parameters.Madhab = Madhab.Shafi;
 
-            var prayerTimes = new PrayerTimes(coordinates, now, parameters);
-            bool isFriday = now.DayOfWeek == DayOfWeek.Friday;
+            var prayerTimes = new PrayerTimes(coordinates, prayerDate, parameters);
+            bool isFriday = prayerDate.DayOfWeek == DayOfWeek.Friday;
 
-            var wibZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-            DateTime ToLocal(DateTime utcTime) => TimeZoneInfo.ConvertTimeFromUtc(utcTime, wibZone);
+            DateTime ToLocal(DateTime utcTime) =>
+                TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utcTime, DateTimeKind.Utc), timeZone);
 
             var subuh = ToLocal(prayerTimes.Fajr);
             var syuruq = ToLocal(prayerTimes.Sunrise);
@@ -49,7 +56,7 @@ public double Longitude { get; set; } = 110.3147359;
 
             foreach (var item in list)
             {
-                if (item.Time > now)
+                if (item.IsAdzan && (item.Time > now || prayerDate != now.Date))
                 {
                     item.IsNext = true;
                     break;
@@ -57,6 +64,20 @@ public double Longitude { get; set; } = 110.3147359;
             }
 
             return list;
+        }
+
+        private static CalculationParameters CreateCalculationParameters(string methodName)
+        {
+            return methodName switch
+            {
+                "MuslimWorldLeague" => CalculationMethod.MuslimWorldLeague(),
+                "Egyptian" => CalculationMethod.Egyptian(),
+                "Karachi" => CalculationMethod.Karachi(),
+                "UmmAlQura" => CalculationMethod.UmmAlQura(),
+                "NorthAmerica" => CalculationMethod.NorthAmerica(),
+                "Singapore" => CalculationMethod.Singapore(),
+                _ => new CalculationParameters("Kemenag", 20.0, 18.0)
+            };
         }
     }
 }

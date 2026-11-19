@@ -1,0 +1,242 @@
+{
+  "project": "EzPrayer",
+  "updated_at": "2026-11-19",
+  "features_added": [
+    {
+      "id": "F-01",
+      "name": "Jadwal diperbarui otomatis tiap pergantian hari",
+      "status": "implemented",
+      "details": "Widget dan scheduler menghitung ulang jadwal berdasarkan tanggal di zona waktu kota yang dipilih."
+    },
+    {
+      "id": "F-02",
+      "name": "Widget menempel ke wallpaper menggunakan WorkerW",
+      "status": "implemented_with_fallback",
+      "details": "Aplikasi mencari WorkerW dan memasang widget di sana. Jika gagal, aplikasi memakai fallback posisi paling belakang.",
+      "verification": "Belum diuji langsung pada Windows 11 24H2."
+    },
+    {
+      "id": "F-03",
+      "name": "Pengaturan kota dan metode perhitungan jadwal sholat",
+      "status": "implemented",
+      "details": "Pengaturan menyediakan pilihan kota manual dan deteksi koordinat melalui layanan lokasi Windows; pengguna tetap dapat mengganti kota secara manual."
+    },
+    {
+      "id": "F-05",
+      "name": "Ikon tray memakai logo EzPrayer",
+      "status": "implemented",
+      "details": "Ikon Assets/Images/EzPrayer.ico dipakai oleh tray dan jendela Al-Quran, disetel sebagai ikon aplikasi, dan disalin ke output build."
+    },
+    {
+      "id": "F-06",
+      "name": "Hitung mundur ke sholat berikutnya",
+      "status": "implemented",
+      "details": "Widget menampilkan hitung mundur menuju sholat berikutnya, termasuk Subuh hari berikutnya setelah Isya."
+    },
+    {
+      "id": "BUG-2",
+      "name": "Pembaruan jadwal, label Jumat, dan hitung mundur",
+      "status": "implemented",
+      "details": "Jadwal widget dan scheduler diperbarui saat tanggal lokal kota berganti."
+    },
+    {
+      "id": "BUG-3",
+      "name": "Koordinat lokasi tidak lagi hardcoded",
+      "status": "implemented",
+      "details": "Koordinat dan zona waktu diambil dari pengaturan kota dan digunakan untuk perhitungan jadwal."
+    },
+    {
+      "id": "BUG-4",
+      "name": "Metode perhitungan default Kemenag",
+      "status": "implemented",
+      "details": "Metode bawaan menggunakan sudut Subuh 20 derajat dan Isya 18 derajat; metode lain juga dapat dipilih."
+    },
+    {
+      "id": "F-04",
+      "name": "Autostart bersama Windows",
+      "status": "implemented",
+      "details": "Pengaturan menyediakan opsi on/off autostart melalui registry HKCU Run."
+    },
+    {
+      "id": "BUG-5",
+      "name": "Mengganti popup Al-Kahf dengan notifikasi tray",
+      "status": "implemented",
+      "details": "Popup MessageBox dihapus. Pemutaran dan kegagalan audio Al-Kahf dilaporkan melalui notifikasi tray."
+    },
+    {
+      "id": "BUG-6",
+      "name": "Menghapus jendela utama duplikat dan using tidak terpakai",
+      "status": "implemented",
+      "details": "File MainWindow kosong di root dan using yang tidak terpakai di App.xaml.cs dihapus."
+    },
+    {
+      "id": "BUG-8",
+      "name": "Ikon tray dan autostart",
+      "status": "implemented",
+      "details": "Tray memakai logo EzPrayer yang disediakan dan opsi autostart tersedia di pengaturan."
+    }
+  ],
+  "settings_ui": {
+    "access": "Buka jendela utama EzPrayer, lalu pilih Pengaturan di menu samping.",
+    "options": [
+      "Memilih kota",
+      "Mendeteksi koordinat melalui lokasi Windows; pemilihan kota manual tetap tersedia",
+      "Memilih metode perhitungan",
+      "Mengaktifkan atau menonaktifkan autostart",
+      "Mengoreksi tanggal Hijriah -1, 0, atau +1 hari",
+      "Memilih tema untuk seluruh aplikasi",
+      "Mengatur volume dan memilih file adzan biasa serta adzan Subuh",
+      "Menguji suara adzan dan mengembalikan suara bawaan",
+      "Mengatur ukuran teks Arab dan terjemahan Al-Quran",
+      "Mengaktifkan atau menonaktifkan jadwal murottal Al-Kahf Jumat pukul 08:00"
+    ]
+  },
+  "main_application_progress": {
+    "implemented": [
+      {
+        "id": 1,
+        "feature": "Menu samping dengan navigasi Beranda, Al-Quran, Kalender, Murottal, Pengaturan, dan Tentang"
+      },
+      {
+        "id": 2,
+        "feature": "Beranda menampilkan sholat berikutnya dan hitung mundur"
+      },
+      {
+        "id": 3,
+        "feature": "Beranda menampilkan jadwal sholat hari ini"
+      },
+      {
+        "id": 4,
+        "feature": "Beranda menampilkan tanggal Hijriah dan kota"
+      },
+      {
+        "id": 5,
+        "feature": "Pintasan Lanjut baca Quran membuka surah terakhir yang dipilih"
+      },
+      {
+        "id": 6,
+        "feature": "Saat halaman Al-Quran dibuka, aplikasi memilih surah terakhir atau Al-Fatiha"
+      },
+      {
+        "id": 7,
+        "feature": "Judul surah menampilkan jumlah ayat"
+      },
+      {
+        "id": 8,
+        "feature": "Mencari nama surah dan ayat berdasarkan teks Arab atau terjemahan"
+      },
+      {
+        "id": 9,
+        "feature": "Menyimpan, membuka, dan menghapus bookmark ayat Al-Quran"
+      },
+      {
+        "id": 10,
+        "feature": "Menyimpan dan memulihkan posisi baca sampai nomor ayat"
+      },
+      {
+        "id": 11,
+        "feature": "Mengatur dan menyimpan ukuran font Arab serta terjemahan"
+      },
+      {
+        "id": 17,
+        "feature": "Memilih surah di halaman Murottal dan memutar atau menjeda audio"
+      },
+      {
+        "id": 18,
+        "feature": "Menggeser posisi audio dan melihat waktu berjalan serta durasi"
+      },
+      {
+        "id": 19,
+        "feature": "Mengaktifkan atau menonaktifkan jadwal Al-Kahf Jumat pukul 08:00"
+      },
+      {
+        "id": 25,
+        "feature": "Halaman Tentang menampilkan logo, nama, versi, dan tautan GitHub"
+      },
+      {
+        "id": 26,
+        "feature": "Mendeteksi koordinat lokasi dengan layanan Windows dan tetap mengizinkan kota manual"
+      },
+      {
+        "id": 34,
+        "feature": "Ringkasan hari dan tanggal Masehi/Hijriah di Beranda"
+      }
+    ],
+    "partial": [
+      "Uji WorkerW di Windows 11 24H2 harus dilakukan manual di PC pemilik."
+    ],
+    "next_suggested_step": "Uji WorkerW dan seluruh checklist secara manual di PC pemilik, lalu siapkan installer rilis."
+  },
+  "murottal_progress": {
+    "completed_items": [17, 18, 19],
+    "details": [
+      "Halaman Murottal menyediakan daftar surah, putar/jeda, stop, penggeser durasi, dan tampilan waktu.",
+      "Penggeser aktif jika streaming menyediakan durasi dan mendukung pencarian.",
+      "Jadwal Al-Kahf tetap aktif secara bawaan dan dapat dinonaktifkan dari Pengaturan."
+    ]
+  },
+  "about_progress": {
+    "completed_items": [25],
+    "details": [
+      "Halaman Tentang menampilkan logo, nama aplikasi, versi assembly, dan tautan repositori GitHub."
+    ]
+  },
+  "location_progress": {
+    "completed_items": [26],
+    "details": [
+      "Deteksi memakai Windows Geolocation API, meminta izin Windows, dan tidak mengirim koordinat ke layanan pihak ketiga.",
+      "Koordinat akurat disimpan sebagai lokasi otomatis; zona waktu mengikuti pengaturan zona waktu Windows.",
+      "Pilihan kota manual tetap tersedia untuk mengoreksi lokasi atau zona waktu."
+    ]
+  },
+  "quran_progress": {
+    "completed_items": [
+      "Pencarian surah dan ayat menggunakan teks Arab atau terjemahan",
+      "Bookmark ayat yang tersimpan dan dapat dibuka atau dihapus",
+      "Posisi baca terakhir mencakup surah dan ayat serta dipulihkan saat lanjut membaca",
+      "Ukuran font Arab dan terjemahan yang tersimpan di pengaturan"
+    ],
+    "details": [
+      "Hasil pencarian ayat dapat dipilih untuk membuka surah dan menggulir ke ayat terkait.",
+      "Pengaturan font tersedia di halaman Pengaturan; ukuran Arab 18-56 pt dan terjemahan 12-32 pt."
+    ]
+  },
+  "calendar_progress": {
+    "completed_items": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+    "details": [
+      "Kalender bulanan Masehi dengan navigasi bulan dan tombol Hari ini.",
+      "Tanggal saat ini, jam realtime, penanda hari ini, serta detail tanggal yang dipilih.",
+      "Tanggal Hijriah per hari dan rentang bulan Hijriah menggunakan UmAlQuraCalendar.",
+      "Koreksi tanggal Hijriah -1, 0, atau +1 hari tersedia di pengaturan.",
+      "Latar gradasi, kartu transparan, dan pilihan tema Biru, Hijau, Ungu, atau Gelap."
+    ]
+  },
+  "settings_progress": {
+    "completed_items": [20, 21, 22, 23, 24, "24.1"],
+    "details": [
+      "Pengaturan kota, metode hitung, autostart, dan koreksi Hijriah dipindahkan ke halaman Pengaturan aplikasi utama.",
+      "Pilihan tema kini diterapkan ke latar aplikasi, sidebar, kartu Beranda, dan Kalender.",
+      "Volume adzan dapat diatur; file adzan biasa dan Subuh dapat dipilih terpisah atau dikembalikan ke bawaan.",
+      "Jadwal otomatis Al-Kahf setiap Jumat pukul 08:00 dapat dinyalakan atau dimatikan.",
+      "Widget dan Beranda menerima pembaruan jadwal setelah pengaturan disimpan."
+    ]
+  },
+  "known_limitations": [
+    "WorkerW belum diuji manual di Windows 11 24H2.",
+    "Mode audio offline untuk Al-Kahf tetap ditunda sesuai keputusan pada ezprayer-belum-dibuat.json."
+  ],
+  "verification": {
+    "command": "dotnet build .\\EzPrayer.csproj --no-restore -p:OutputPath=bin\\V4Check\\",
+    "result": "Berhasil setelah restore, 0 warning dan 0 error",
+    "diff_check": "Berhasil",
+    "runtime_ui": "Belum diuji langsung; izin lokasi Windows dan streaming audio perlu diuji di PC pemilik.",
+    "manual_checks_pending": [
+      "Izinkan lokasi Windows, coba Deteksi lokasi, simpan, dan pastikan kota manual tetap bisa dipilih.",
+      "Coba putar, jeda, lanjutkan, dan geser audio Murottal; geser hanya tersedia jika streaming mendukungnya.",
+      "Matikan dan nyalakan kembali jadwal Al-Kahf di Pengaturan.",
+      "Buka halaman Tentang dan uji tautan GitHub.",
+      "Uji widget WorkerW secara manual di Windows 11 24H2."
+    ],
+    "icon_file": "Assets/Images/EzPrayer.ico"
+  }
+}

@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using EzPrayer.Services;
 using Hardcodet.Wpf.TaskbarNotification;
 
@@ -11,23 +13,19 @@ namespace EzPrayer.Views
         private SchedulerService? _schedulerService;
         private AudioService? _audioService;
         private MainWindow? _mainWindow;
-        
-        // Tambahan untuk Murottal Al-Kahf
-        private KahfSchedulerService? _kahfSchedulerService; 
+        private KahfSchedulerService? _kahfSchedulerService;
+        private readonly WidgetViewModel _widgetViewModel;
 
         public WidgetWindow()
         {
             InitializeComponent();
-            DataContext = new WidgetViewModel();
+            _widgetViewModel = new WidgetViewModel();
+            DataContext = _widgetViewModel;
 
-            // Scheduler Adzan
             _audioService = new AudioService();
             _schedulerService = new SchedulerService(_audioService);
-            _schedulerService.Start();
 
-            // Scheduler Murottal Al-Kahf
-            _kahfSchedulerService = new KahfSchedulerService(new QuranAudioService());
-            _kahfSchedulerService.Start();
+            _kahfSchedulerService = new KahfSchedulerService(new QuranAudioService(), ShowKahfNotification);
 
             WindowStartupLocation = WindowStartupLocation.Manual;
             this.Loaded += WidgetWindow_Loaded;
@@ -40,59 +38,114 @@ namespace EzPrayer.Views
             this.Left = workArea.Right - this.ActualWidth - 20;
             this.Top = workArea.Top + 0;
 
-            SetupTrayIcon();
+            WallpaperHost.AttachToWallpaper(this);
+            if (_trayIcon == null)
+            {
+                SetupTrayIcon();
+            }
+
+            _schedulerService?.Start();
+            _kahfSchedulerService?.Start();
         }
 
         private void SetupTrayIcon()
         {
             _trayIcon = new TaskbarIcon();
             _trayIcon.ToolTipText = "EzPrayer - Jadwal Sholat";
-            
-            _trayIcon.IconSource = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
-                System.Drawing.SystemIcons.Application.Handle,
-                Int32Rect.Empty,
-                System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
 
-            // Buka MainWindow saat klik kiri ikon tray
+            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Images", "EzPrayer.ico");
+            if (File.Exists(iconPath))
+            {
+                var iconImage = new BitmapImage();
+                iconImage.BeginInit();
+                iconImage.UriSource = new Uri(iconPath);
+                iconImage.CacheOption = BitmapCacheOption.OnLoad;
+                iconImage.EndInit();
+                iconImage.Freeze();
+                _trayIcon.IconSource = iconImage;
+            }
+            else
+            {
+                Console.WriteLine($"Ikon EzPrayer tidak ditemukan: {iconPath}");
+                _trayIcon.IconSource = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                    System.Drawing.SystemIcons.Application.Handle,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+            }
+
             _trayIcon.TrayLeftMouseUp += (s, e) =>
             {
-                if (_mainWindow == null || !_mainWindow.IsVisible)
-                {
-                    _mainWindow = new MainWindow();
-                    _mainWindow.Show();
-                }
-                else
-                {
-                    _mainWindow.Activate();
-                }
+                var mainWindow = GetOrCreateMainWindow();
+                mainWindow.Show();
+                mainWindow.Activate();
             };
 
             var contextMenu = new System.Windows.Controls.ContextMenu();
-            
+
             var stopAdzanMenuItem = new System.Windows.Controls.MenuItem { Header = "Stop Adzan" };
-            stopAdzanMenuItem.Click += (s, e) => 
+            stopAdzanMenuItem.Click += (s, e) =>
             {
                 _audioService?.Stop();
             };
             contextMenu.Items.Add(stopAdzanMenuItem);
 
             var exitMenuItem = new System.Windows.Controls.MenuItem { Header = "Keluar (Exit)" };
-            exitMenuItem.Click += (s, e) => 
+            exitMenuItem.Click += (s, e) =>
             {
                 _schedulerService?.Stop();
-                _kahfSchedulerService?.Stop(); // Matikan juga scheduler Al-Kahf
+                _kahfSchedulerService?.Stop();
                 _trayIcon?.Dispose();
                 Application.Current.Shutdown();
             };
-            
+
             contextMenu.Items.Add(exitMenuItem);
             _trayIcon.ContextMenu = contextMenu;
         }
 
-        protected override void OnSourceInitialized(EventArgs e)
+        private MainWindow GetOrCreateMainWindow()
         {
-            base.OnSourceInitialized(e);
-            WallpaperHost.AttachToWallpaper(this);
+            if (_mainWindow == null || !_mainWindow.IsVisible)
+            {
+                _mainWindow = new MainWindow();
+                _mainWindow.SettingsSaved += MainWindow_SettingsSaved;
+            }
+
+            return _mainWindow;
+        }
+
+        private void MainWindow_SettingsSaved(object? sender, EventArgs e)
+        {
+            _widgetViewModel.RefreshSchedule();
+            _schedulerService?.RefreshSchedule();
+        }
+
+        private void ShowKahfNotification(string title, string message)
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action(() => ShowKahfNotification(title, message)));
+                return;
+            }
+
+            if (_trayIcon == null)
+            {
+                Console.WriteLine($"[{title}] {message}");
+                return;
+            }
+
+            var icon = message.Contains("tidak bisa diputar", StringComparison.OrdinalIgnoreCase) ||
+                       message.Contains("tidak tersedia", StringComparison.OrdinalIgnoreCase)
+                ? BalloonIcon.Error
+                : BalloonIcon.Info;
+            _trayIcon.ShowBalloonTip(title, message, icon);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _schedulerService?.Stop();
+            _kahfSchedulerService?.Stop();
+            _trayIcon?.Dispose();
+            base.OnClosed(e);
         }
     }
 }

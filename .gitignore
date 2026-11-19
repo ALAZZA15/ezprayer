@@ -4,4 +4,11 @@ obj/
 *.user
 *.suo
 /Assets/
+/Assets/*
+!/Assets/
+!/Assets/Images/
+/Assets/Images/*
+!/Assets/Images/EzPrayer.ico
 /Data/
+/publish/
+/installer/

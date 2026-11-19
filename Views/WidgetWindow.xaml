@@ -57,7 +57,7 @@
                            FontSize="14" 
                            FontWeight="SemiBold" 
                            Foreground="White"/>
-                <TextBlock Text="Yogyakarta" 
+                <TextBlock Text="{Binding LocationName}"
                            FontSize="12" 
                            Foreground="#BBFFFFFF"
                            Margin="0,2,0,0"/>

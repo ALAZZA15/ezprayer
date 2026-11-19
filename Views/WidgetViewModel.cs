@@ -15,6 +15,8 @@ namespace EzPrayer.Views
         private string _currentTime = string.Empty;
         private string _nextPrayerName = string.Empty;
         private string _countdown = string.Empty;
+        private string _locationName = string.Empty;
+        private DateTime _scheduleDate;
 
         public ObservableCollection<PrayerItem> Prayers { get; set; }
 
@@ -36,57 +38,68 @@ namespace EzPrayer.Views
             set { _countdown = value; OnPropertyChanged(); }
         }
 
+        public string LocationName
+        {
+            get => _locationName;
+            set { _locationName = value; OnPropertyChanged(); }
+        }
+
         public WidgetViewModel()
         {
             _prayerService = new PrayerService();
             Prayers = new ObservableCollection<PrayerItem>();
 
-            LoadPrayers();
+            RefreshSchedule();
 
-            // Timer untuk update jam setiap detik
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromSeconds(1);
             _timer.Tick += Timer_Tick;
             _timer.Start();
             
-            UpdateTime();
+            UpdateTime(_prayerService.GetCurrentTime());
         }
 
-        private void LoadPrayers()
+        public void RefreshSchedule()
         {
+            var now = _prayerService.GetCurrentTime();
             Prayers.Clear();
-            var list = _prayerService.GetTodayPrayers();
+            var list = _prayerService.GetTodayPrayers(now.Date);
             foreach (var item in list)
             {
                 Prayers.Add(item);
             }
-            
+
+            _scheduleDate = now.Date;
+            LocationName = SettingsService.Load().LocationName;
             var next = Prayers.FirstOrDefault(p => p.IsNext);
             NextPrayerName = next != null ? next.Name : "Subuh (Besok)";
         }
 
         private void Timer_Tick(object? sender, EventArgs e)
         {
-            UpdateTime();
+            var now = _prayerService.GetCurrentTime();
+            if (now.Date != _scheduleDate)
+            {
+                RefreshSchedule();
+            }
+
+            UpdateTime(now);
         }
 
-        private void UpdateTime()
+        private void UpdateTime(DateTime now)
         {
-            var now = DateTime.Now;
             CurrentTime = now.ToString("HH:mm:ss");
 
-            var next = Prayers.FirstOrDefault(p => p.Time > now);
-            if (next != null)
+            var next = Prayers.FirstOrDefault(p => p.IsAdzan && p.Time > now);
+            if (next == null)
             {
-                NextPrayerName = next.Name;
-                var diff = next.Time - now;
-                Countdown = $"Menuju waktu {next.Name}";
+                next = _prayerService.GetTodayPrayers(now.Date.AddDays(1))
+                    .First(prayer => prayer.Name == "Subuh");
             }
-            else
-            {
-                NextPrayerName = "Subuh (Besok)";
-                Countdown = "Menunggu Subuh";
-            }
+
+            NextPrayerName = next.Name;
+            var remaining = next.Time - now;
+            Countdown = $"Menuju {next.Name}: {(int)remaining.TotalHours:00}:{remaining.Minutes:00}:{remaining.Seconds:00}";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

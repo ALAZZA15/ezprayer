@@ -9,18 +9,15 @@ namespace EzPrayer.Services
         private readonly DispatcherTimer _timer;
         private readonly PrayerService _prayerService;
         private readonly AudioService _audioService;
-        
-        // Simpan jadwal di memori, jangan dihitung ulang tiap detik
         private List<PrayerItem> _todayPrayers = new();
-        private string _lastPlayedKey = string.Empty; 
+        private string _lastPlayedKey = string.Empty;
+        private DateTime _scheduleDate;
 
         public SchedulerService(AudioService audioService)
         {
             _prayerService = new PrayerService();
             _audioService = audioService;
-            
-            // Ambil jadwal SEKALI saat aplikasi pertama jalan
-            _todayPrayers = _prayerService.GetTodayPrayers();
+            RefreshSchedule();
 
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromSeconds(1);
@@ -39,11 +36,22 @@ namespace EzPrayer.Services
             _audioService.Stop();
         }
 
+        public void RefreshSchedule()
+        {
+            var now = _prayerService.GetCurrentTime();
+            _todayPrayers = _prayerService.GetTodayPrayers(now.Date);
+            _scheduleDate = now.Date;
+            Console.WriteLine($"[SCHEDULER] Jadwal {_scheduleDate:yyyy-MM-dd} diperbarui.");
+        }
+
         private void Timer_Tick(object? sender, EventArgs e)
         {
-            var now = DateTime.Now;
+            var now = _prayerService.GetCurrentTime();
+            if (now.Date != _scheduleDate)
+            {
+                RefreshSchedule();
+            }
 
-            // Cek setiap detik, tapi bandingkan dengan jadwal yang sudah disimpan (_todayPrayers)
             foreach (var prayer in _todayPrayers)
             {
                 if (!prayer.IsAdzan) continue;
@@ -53,7 +61,6 @@ namespace EzPrayer.Services
                     string currentKey = $"{prayer.Name}_{now:yyyy-MM-dd}";
                     if (_lastPlayedKey == currentKey) continue;
 
-                    // Toleransi 5 menit
                     if ((now - prayer.Time).TotalMinutes < 5)
                     {
                         Console.WriteLine($"[ADZAN] Waktu {prayer.Name} telah tiba! Memutar audio...");

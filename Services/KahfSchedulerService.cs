@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using System.Windows;
 using System.Windows.Threading;
 
 namespace EzPrayer.Services
@@ -11,10 +10,13 @@ namespace EzPrayer.Services
         private readonly DispatcherTimer _timer;
         private readonly QuranAudioService _audioService;
         private readonly string _lastPlayedFilePath;
+        private readonly Action<string, string> _notify;
 
-        public KahfSchedulerService(QuranAudioService audioService)
+        public KahfSchedulerService(QuranAudioService audioService, Action<string, string> notify)
         {
             _audioService = audioService;
+            _notify = notify;
+            _audioService.PlaybackFailed += AudioService_PlaybackFailed;
             
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string folderPath = Path.Combine(appData, "EzPrayer");
@@ -34,16 +36,22 @@ namespace EzPrayer.Services
         public void Start()
         {
             _timer.Start();
-            CheckAndPromptIfMissed();
+            PlayIfMissed();
         }
 
         public void Stop()
         {
             _timer.Stop();
+            _audioService.Stop();
         }
 
         private void Timer_Tick(object? sender, EventArgs e)
         {
+            if (!SettingsService.Load().KahfAutoPlayEnabled)
+            {
+                return;
+            }
+
             var now = DateTime.Now;
 
             // Hanya berjalan di hari Jumat
@@ -53,28 +61,22 @@ namespace EzPrayer.Services
             if (now.Hour >= 8 && !HasPlayedToday())
             {
                 PlayAlKahf();
-                SavePlayedToday();
             }
         }
 
-        private void CheckAndPromptIfMissed()
+        private void PlayIfMissed()
         {
+            if (!SettingsService.Load().KahfAutoPlayEnabled)
+            {
+                return;
+            }
+
             var now = DateTime.Now;
             if (now.DayOfWeek != DayOfWeek.Friday) return;
 
             if (now.Hour >= 8 && !HasPlayedToday())
             {
-                var result = MessageBox.Show(
-                    "Hari ini hari Jumat dan sudah lewat jam 08:00. Apakah Anda ingin memutar Murottal Al-Kahf sekarang?",
-                    "EzPrayer - Murottal Al-Kahf",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    PlayAlKahf();
-                    SavePlayedToday();
-                }
+                PlayAlKahf();
             }
         }
 
@@ -90,7 +92,10 @@ namespace EzPrayer.Services
                     return lastDate.Date == DateTime.Now.Date;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Gagal membaca catatan pemutaran Al-Kahf: {ex.Message}");
+            }
             return false;
         }
 
@@ -100,21 +105,34 @@ namespace EzPrayer.Services
             {
                 File.WriteAllText(_lastPlayedFilePath, DateTime.Now.ToString("yyyy-MM-dd"));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Gagal menyimpan catatan pemutaran Al-Kahf: {ex.Message}");
+            }
         }
 
         private void PlayAlKahf()
         {
             string? url = GetAudioUrlFromJson(18);
-            if (!string.IsNullOrEmpty(url))
+            if (string.IsNullOrWhiteSpace(url))
             {
-                _audioService.PlayFromUrl(url);
-                MessageBox.Show("Memutar Murottal Al-Kahf.", "EzPrayer", MessageBoxButton.OK, MessageBoxImage.Information);
+                _notify("EzPrayer - Murottal Al-Kahf", "Tautan audio Al-Kahf tidak tersedia.");
+                SavePlayedToday();
+                return;
             }
-            else
+
+            if (_audioService.PlayFromUrl(url))
             {
-                MessageBox.Show("Gagal menemukan link audio Al-Kahf.", "EzPrayer", MessageBoxButton.OK, MessageBoxImage.Error);
+                _notify("EzPrayer - Murottal Al-Kahf", "Murottal Al-Kahf mulai diputar.");
             }
+
+            SavePlayedToday();
+        }
+
+        private void AudioService_PlaybackFailed(Exception exception)
+        {
+            Console.WriteLine($"Gagal memutar Al-Kahf: {exception.Message}");
+            _notify("EzPrayer - Murottal Al-Kahf", "Tidak ada koneksi, Al-Kahf tidak bisa diputar.");
         }
 
         private string? GetAudioUrlFromJson(int surahNumber)
